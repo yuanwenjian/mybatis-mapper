@@ -59,7 +59,11 @@
 
     <select id="joinMapperCondition" parameterType="com.github.condition.JoinMapperCondition"
             resultType="demo.model.PhoneImei">
-        SELECT phoneImei.* FROM wms_phone_imei phoneImei
+        SELECT
+        <if test="distinct">
+            distinct
+        </if>
+        phoneImei.* FROM wms_phone_imei phoneImei
         JOIN wms_user user ON phoneImei.imei_id=user.user_id
         <if test="_parameter!=null">
             <include refid="com.github.common.mapperCondition"></include>
