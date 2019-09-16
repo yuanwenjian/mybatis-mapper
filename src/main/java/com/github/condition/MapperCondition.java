@@ -29,6 +29,9 @@ public class MapperCondition {
 
     private Class tclass;
 
+    public MapperCondition() {
+        criterias = new ArrayList<>();
+    }
 
     public <T> Criteria<T> createCriteria(Class<T> tClass) {
         synchronized (this) {

@@ -48,6 +48,16 @@ public class Criteria<T> {
         return column;
     }
 
+    public Criteria andIsNull(String property) {
+        addCondition(getColumn(property) + " is null");
+        return (Criteria) this;
+    }
+
+    public Criteria andIsNotNull(String property) {
+        addCondition(getColumn(property) +" is not null");
+        return (Criteria) this;
+    }
+
     public void andEqual(String field, Object value) {
         addCondition(getColumn(field) + "=", value);
     }
@@ -82,10 +92,51 @@ public class Criteria<T> {
 
 
 
-    public void andIn(String field, List<?> values) {
-        addCondition(getColumn(field) + " in", values);
+    public <T> Criteria andIn(String property,List<T> values) {
+        if(values!=null && values.size()>1000){
+
+            addCondition(buildBatchInCondition(getColumn(property),values,false));
+        }else{
+            addCondition(getColumn(property) + " in", values, property);
+        }
+        return (Criteria) this;
     }
 
+    public <T> Criteria andInAsChar(String property,List<T> values) {
+        if(values!=null && values.size()>1000){
+
+            addCondition(buildBatchInCondition(getColumn(property),values,true));
+        }else{
+            addCondition(getColumn(property) + " in", values, property);
+        }
+        return (Criteria) this;
+    }
+
+    private String buildBatchInCondition(String column,List<?> inValues,boolean isChar) {
+        StringBuilder sb=new StringBuilder();
+        int batchSize=1000;
+        int count=(inValues.size()%batchSize==0)?inValues.size()/batchSize:inValues.size()/batchSize+1;
+        sb.append("(");
+        for(int i=0;i<count;i++){
+            int endIndex=(i+1)*batchSize>inValues.size()?inValues.size():(i+1)*batchSize;
+            List<?> batchInValues=inValues.subList(i*batchSize,endIndex);
+            StringBuilder batchSb=new StringBuilder();
+            batchSb.append(column+" in (");
+            for(Object each:batchInValues){
+                if(isChar){
+                    batchSb.append("'"+each+"',");
+                }else{
+                    batchSb.append(each+",");
+                }
+            }
+            if(i!=0){
+                sb.append(" or ");
+            }
+            sb.append(batchSb.substring(0,batchSb.length()-1)+")");
+        }
+        sb.append(")");
+        return sb.toString();
+    }
     public void andNotIn(String field, List<?> firstValues) {
         addCondition(getColumn(field) + " not in ", firstValues);
     }
